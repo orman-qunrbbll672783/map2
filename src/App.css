@@ -1,38 +1,86 @@
+/* Custom styles for ClientAIMap landing page */
+
+.bg-300\% {
+  background-size: 300% 300%;
+}
+
+/* Smooth scrolling */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Custom gradient animation */
+@keyframes gradient {
+  0%, 100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+/* Glassmorphism effect */
+.glass {
+  background: rgba(255, 255, 255, 0.25);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+}
+
+/* Neumorphism effect */
+.neomorphism {
+  background: #f0f0f0;
+  border-radius: 20px;
+  box-shadow: 
+    20px 20px 60px #bebebe,
+    -20px -20px 60px #ffffff;
+}
+
+/* Custom hover effects */
+.hover-lift {
+  transition: transform 0.3s ease;
+}
+
+.hover-lift:hover {
+  transform: translateY(-5px);
+}
+
+/* Responsive text sizes */
+@media (max-width: 768px) {
+  .text-7xl {
+    font-size: 4rem;
+  }
+  
+  .text-8xl {
+    font-size: 5rem;
+  }
+}
+
+/* Remove default text centering for better layout control */
 .App {
-  text-align: center;
+  text-align: left;
 }
 
-.App-logo {
-  height: 40vmin;
-  pointer-events: none;
+/* Fix onboarding modal scrolling and overlapping */
+.onboarding-modal {
+  scroll-behavior: smooth;
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  .App-logo {
-    animation: App-logo-spin infinite 20s linear;
-  }
+.onboarding-content {
+  isolation: isolate;
 }
 
-.App-header {
-  background-color: #282c34;
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  font-size: calc(10px + 2vmin);
-  color: white;
+.social-card {
+  position: relative;
+  isolation: isolate;
+  transform: translateZ(0);
 }
 
-.App-link {
-  color: #61dafb;
-}
+.social-card:nth-child(1) { z-index: 13; }
+.social-card:nth-child(2) { z-index: 12; }
+.social-card:nth-child(3) { z-index: 11; }
 
-@keyframes App-logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+/* Ensure proper input focus layering */
+.social-input:focus {
+  position: relative;
+  z-index: 20;
 }

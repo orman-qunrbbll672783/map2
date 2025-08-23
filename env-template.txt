@@ -1,0 +1,30 @@
+# Copy this file to .env and replace with your actual API keys
+
+# Supabase Configuration
+REACT_APP_SUPABASE_URL=your_supabase_project_url_here
+REACT_APP_SUPABASE_ANON_KEY=your_supabase_anon_key_here
+
+# Google Maps API Configuration
+REACT_APP_GOOGLE_MAPS_API_KEY=your_google_maps_api_key_here
+
+# Instructions:
+# 1. Copy this file and rename it to .env (no extension)
+# 2. Replace the placeholder values with your actual API keys
+# 3. Make sure .env is in your .gitignore file (it should be already)
+# 4. Restart your development server after making changes
+
+# Google Maps API Setup:
+# 1. Go to Google Cloud Console (https://console.cloud.google.com/)
+# 2. Create a new project or select existing one
+# 3. Enable these APIs:
+#    - Maps JavaScript API
+#    - Places API
+#    - Geolocation API
+# 4. Create API credentials (API Key)
+# 5. Restrict the API key to your domain for security
+# 6. Copy the API key and paste it above
+
+# Example .env file content:
+# REACT_APP_SUPABASE_URL=https://abcdefghijk.supabase.co
+# REACT_APP_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+# REACT_APP_GOOGLE_MAPS_API_KEY=AIzaSyBvOkBo0jlvL0HD4C2_keWE1TGHz_MSHgs
