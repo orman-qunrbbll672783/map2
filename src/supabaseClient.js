@@ -259,3 +259,125 @@ export const signUpWithGoogle = async (userData) => {
     return { success: false, error: error.message };
   }
 };
+
+// Saved Businesses Functions
+export const getSavedBusinesses = async () => {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    if (!user) {
+      throw new Error('User not authenticated');
+    }
+
+    const { data, error } = await supabase
+      .from('saved_businesses')
+      .select('*')
+      .eq('user_id', user.id)
+      .order('saved_at', { ascending: false });
+
+    if (error) throw error;
+    
+    // Extract business_data from each record
+    const businesses = data.map(record => ({
+      ...record.business_data,
+      savedAt: record.saved_at,
+      savedId: record.id
+    }));
+    
+    return { success: true, data: businesses };
+  } catch (error) {
+    console.error('Error getting saved businesses:', error);
+    return { success: false, error: error.message, data: [] };
+  }
+};
+
+export const saveBusinessToSupabase = async (business) => {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    if (!user) {
+      throw new Error('User not authenticated');
+    }
+
+    // Check if business is already saved
+    const { data: existing } = await supabase
+      .from('saved_businesses')
+      .select('id')
+      .eq('user_id', user.id)
+      .eq('business_place_id', business.id)
+      .single();
+
+    if (existing) {
+      return { success: false, error: 'Business already saved' };
+    }
+
+    const { data, error } = await supabase
+      .from('saved_businesses')
+      .insert([
+        {
+          user_id: user.id,
+          business_place_id: business.id,
+          business_data: business,
+          saved_at: new Date().toISOString()
+        }
+      ])
+      .select()
+      .single();
+
+    if (error) throw error;
+    
+    return { success: true, data };
+  } catch (error) {
+    console.error('Error saving business:', error);
+    return { success: false, error: error.message };
+  }
+};
+
+export const removeSavedBusiness = async (businessId) => {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    if (!user) {
+      throw new Error('User not authenticated');
+    }
+
+    const { error } = await supabase
+      .from('saved_businesses')
+      .delete()
+      .eq('user_id', user.id)
+      .eq('business_place_id', businessId);
+
+    if (error) throw error;
+    
+    return { success: true };
+  } catch (error) {
+    console.error('Error removing saved business:', error);
+    return { success: false, error: error.message };
+  }
+};
+
+export const isBusinessSaved = async (businessId) => {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    if (!user) {
+      return { success: true, isSaved: false };
+    }
+
+    const { data, error } = await supabase
+      .from('saved_businesses')
+      .select('id')
+      .eq('user_id', user.id)
+      .eq('business_place_id', businessId)
+      .single();
+
+    if (error && error.code !== 'PGRST116') { // PGRST116 = no rows returned
+      throw error;
+    }
+    
+    return { success: true, isSaved: !!data };
+  } catch (error) {
+    console.error('Error checking if business is saved:', error);
+    return { success: false, error: error.message, isSaved: false };
+  }
+};

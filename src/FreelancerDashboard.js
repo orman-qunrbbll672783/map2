@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { getSavedBusinesses, saveBusinessToSupabase, removeSavedBusiness } from './supabaseClient';
 
 // Business type options for search
 const BUSINESS_TYPES = [
@@ -68,7 +69,7 @@ const HealthScoreBadge = ({ score }) => {
 };
 
 // Business Card Component
-const BusinessCard = ({ business, onViewDetails, onSave, onSocialSearch, isSaved }) => {
+const BusinessCard = ({ business, onViewDetails, onSave, onSocialSearch, isSaved, isSaving }) => {
   const healthScore = calculateDigitalHealthScore(business);
 
   return (
@@ -101,16 +102,23 @@ const BusinessCard = ({ business, onViewDetails, onSave, onSocialSearch, isSaved
               e.stopPropagation();
               onSave(business);
             }}
+            disabled={isSaving}
             className={`w-8 h-8 rounded-full backdrop-blur-sm border transition-all duration-200 flex items-center justify-center ${
-              isSaved 
-                ? 'bg-red-500 border-red-400 text-white shadow-lg' 
-                : 'bg-white/90 border-white/20 text-neutral-600 hover:bg-red-50 hover:text-red-500'
+              isSaving 
+                ? 'bg-neutral-200 border-neutral-300 text-neutral-400 cursor-not-allowed'
+                : isSaved 
+                  ? 'bg-red-500 border-red-400 text-white shadow-lg hover:bg-red-600' 
+                  : 'bg-white/90 border-white/20 text-neutral-600 hover:bg-red-50 hover:text-red-500 hover:border-red-200'
             }`}
-            title={isSaved ? 'Remove from saved' : 'Save business'}
+            title={isSaving ? 'Saving...' : isSaved ? 'Remove from saved' : 'Save business'}
           >
-            <svg className="w-4 h-4" fill={isSaved ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.682l-1.318-1.364a4.5 4.5 0 00-6.364 0z" />
-            </svg>
+            {isSaving ? (
+              <div className="w-3 h-3 border border-neutral-400 border-t-transparent rounded-full animate-spin"></div>
+            ) : (
+              <svg className="w-4 h-4" fill={isSaved ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.682l-1.318-1.364a4.5 4.5 0 00-6.364 0z" />
+              </svg>
+            )}
           </button>
         </div>
       </div>
@@ -237,6 +245,8 @@ const FreelancerDashboard = ({ userData, onLogout }) => {
   const [mapError, setMapError] = useState(null);
   const [locationError, setLocationError] = useState(null);
   const [savedBusinesses, setSavedBusinesses] = useState([]);
+  const [loadingSavedBusinesses, setLoadingSavedBusinesses] = useState(true);
+  const [savingBusiness, setSavingBusiness] = useState(null); // Track which business is being saved/unsaved
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [showProfileDropdown, setShowProfileDropdown] = useState(false);
   const [activeView, setActiveView] = useState('dashboard'); // 'dashboard' | 'saved'
@@ -266,18 +276,46 @@ const FreelancerDashboard = ({ userData, onLogout }) => {
     setSelectedBusinessTypes([]);
   };
 
-  // Save/unsave business functionality
-  const toggleSaveBusiness = (business) => {
-    setSavedBusinesses(prev => {
-      const isAlreadySaved = prev.find(b => b.id === business.id);
+  // Save/unsave business functionality with Supabase persistence
+  const toggleSaveBusiness = async (business) => {
+    console.log('🔖 Toggling save for business:', business.name);
+    setSavingBusiness(business.id);
+    
+    try {
+      const isAlreadySaved = savedBusinesses.find(b => b.id === business.id);
+      
       if (isAlreadySaved) {
-        // Remove from saved
-        return prev.filter(b => b.id !== business.id);
+        // Remove from Supabase
+        console.log('🗑️ Removing business from saved list...');
+        const result = await removeSavedBusiness(business.id);
+        
+        if (result.success) {
+          // Update local state
+          setSavedBusinesses(prev => prev.filter(b => b.id !== business.id));
+          console.log('✅ Business removed from saved list');
+        } else {
+          console.error('❌ Failed to remove business:', result.error);
+          // Could show a toast notification here
+        }
       } else {
-        // Add to saved
-        return [...prev, business];
+        // Save to Supabase
+        console.log('💾 Saving business to Supabase...');
+        const result = await saveBusinessToSupabase(business);
+        
+        if (result.success) {
+          // Update local state
+          setSavedBusinesses(prev => [...prev, business]);
+          console.log('✅ Business saved successfully');
+        } else {
+          console.error('❌ Failed to save business:', result.error);
+          // Could show a toast notification here
+        }
       }
-    });
+    } catch (error) {
+      console.error('❌ Error toggling save business:', error);
+    } finally {
+      setSavingBusiness(null);
+    }
   };
 
   const isBusinessSaved = (businessId) => {
@@ -324,6 +362,28 @@ const FreelancerDashboard = ({ userData, onLogout }) => {
   useEffect(() => {
     console.log('FreelancerDashboard mounted with userData:', userData);
   }, [userData]);
+
+  // Load saved businesses from Supabase on component mount
+  useEffect(() => {
+    const loadSavedBusinesses = async () => {
+      console.log('🔖 Loading saved businesses from Supabase...');
+      setLoadingSavedBusinesses(true);
+      
+      const result = await getSavedBusinesses();
+      
+      if (result.success) {
+        console.log('✅ Loaded saved businesses:', result.data.length);
+        setSavedBusinesses(result.data);
+      } else {
+        console.error('❌ Failed to load saved businesses:', result.error);
+        setSavedBusinesses([]);
+      }
+      
+      setLoadingSavedBusinesses(false);
+    };
+    
+    loadSavedBusinesses();
+  }, []);
 
   // Initialize map and get user location
   useEffect(() => {
@@ -927,7 +987,7 @@ const FreelancerDashboard = ({ userData, onLogout }) => {
                 }`}
               >
                 <span>Saved Leads</span>
-                {savedBusinesses.length > 0 && (
+                {!loadingSavedBusinesses && savedBusinesses.length > 0 && (
                   <span className="bg-primary-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
                     {savedBusinesses.length}
                   </span>
@@ -1029,7 +1089,7 @@ const FreelancerDashboard = ({ userData, onLogout }) => {
                     }`}
                   >
                     <span>🔖 Saved Leads</span>
-                    {savedBusinesses.length > 0 && (
+                    {!loadingSavedBusinesses && savedBusinesses.length > 0 && (
                       <span className="bg-primary-500 text-white text-xs rounded-full w-6 h-6 flex items-center justify-center">
                         {savedBusinesses.length}
                       </span>
@@ -1270,6 +1330,7 @@ const FreelancerDashboard = ({ userData, onLogout }) => {
                         onSave={toggleSaveBusiness}
                         onSocialSearch={searchSocialMedia}
                         isSaved={isBusinessSaved(business.id)}
+                        isSaving={savingBusiness === business.id}
                       />
                     ))}
                   </div>
@@ -1303,8 +1364,16 @@ const FreelancerDashboard = ({ userData, onLogout }) => {
                     onSave={toggleSaveBusiness}
                     onSocialSearch={searchSocialMedia}
                     isSaved={true}
+                    isSaving={savingBusiness === business.id}
                   />
                 ))}
+              </div>
+            ) : loadingSavedBusinesses ? (
+              <div className="bg-white rounded-2xl border border-neutral-200 p-12 text-center">
+                <div className="flex items-center justify-center space-x-3">
+                  <div className="animate-spin w-8 h-8 border-4 border-primary-200 border-t-primary-600 rounded-full"></div>
+                  <span className="text-neutral-600">Loading saved businesses...</span>
+                </div>
               </div>
             ) : (
               <div className="bg-white rounded-2xl border border-neutral-200 p-12 text-center">
