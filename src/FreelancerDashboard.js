@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { getSavedBusinesses, saveBusinessToSupabase, removeSavedBusiness } from './supabaseClient';
+import ProfileSection from './ProfileSection';
 
 // Business type options for search
 const BUSINESS_TYPES = [
@@ -249,7 +250,7 @@ const FreelancerDashboard = ({ userData, onLogout }) => {
   const [savingBusiness, setSavingBusiness] = useState(null); // Track which business is being saved/unsaved
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [showProfileDropdown, setShowProfileDropdown] = useState(false);
-  const [activeView, setActiveView] = useState('dashboard'); // 'dashboard' | 'saved'
+  const [activeView, setActiveView] = useState('dashboard'); // 'dashboard' | 'saved' | 'profile'
   const [filters, setFilters] = useState({
     hasWebsite: false,
     hasPhone: false,
@@ -994,6 +995,17 @@ const FreelancerDashboard = ({ userData, onLogout }) => {
                 )}
               </button>
               
+              <button
+                onClick={() => setActiveView('profile')}
+                className={`px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
+                  activeView === 'profile' 
+                    ? 'text-primary-600 bg-primary-50' 
+                    : 'text-neutral-600 hover:text-neutral-800 hover:bg-neutral-50'
+                }`}
+              >
+                Profile
+              </button>
+              
               <div className="flex items-center space-x-3">
                 <div className="w-8 h-8 bg-gradient-to-r from-primary-500 to-accent-500 rounded-full flex items-center justify-center text-white text-sm font-semibold">
                   {(userData?.name || userData?.user?.user_metadata?.name || userData?.user?.email)?.charAt(0)?.toUpperCase() || 'U'}
@@ -1094,6 +1106,20 @@ const FreelancerDashboard = ({ userData, onLogout }) => {
                         {savedBusinesses.length}
                       </span>
                     )}
+                  </button>
+                  
+                  <button
+                    onClick={() => {
+                      setActiveView('profile');
+                      closeMobileMenu();
+                    }}
+                    className={`w-full px-4 py-3 text-left rounded-xl transition-colors ${
+                      activeView === 'profile' 
+                        ? 'bg-primary-50 text-primary-600 font-medium' 
+                        : 'text-neutral-700 hover:bg-neutral-50'
+                    }`}
+                  >
+                    👤 Profile
                   </button>
                 </div>
               </div>
@@ -1345,6 +1371,16 @@ const FreelancerDashboard = ({ userData, onLogout }) => {
                 )}
               </div>
             </div>
+          </div>
+        ) : activeView === 'profile' ? (
+          /* Profile View */
+          <div className="">
+            <div className="mb-8">
+              <h2 className="text-3xl font-bold text-neutral-800 mb-2">Profile</h2>
+              <p className="text-neutral-600">Manage your profile information and settings</p>
+            </div>
+            
+            <ProfileSection userData={userData} />
           </div>
         ) : (
           /* Saved Businesses View */
