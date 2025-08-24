@@ -68,7 +68,7 @@ const HealthScoreBadge = ({ score }) => {
 };
 
 // Business Card Component
-const BusinessCard = ({ business, onViewDetails }) => {
+const BusinessCard = ({ business, onViewDetails, onSave, onSocialSearch, isSaved }) => {
   const healthScore = calculateDigitalHealthScore(business);
 
   return (
@@ -86,8 +86,32 @@ const BusinessCard = ({ business, onViewDetails }) => {
             <div className="text-4xl opacity-50">🏢</div>
           </div>
         )}
-        <div className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm rounded-lg px-2 py-1">
-          <HealthScoreBadge score={healthScore} />
+        
+        {/* Top right badges */}
+        <div className="absolute top-3 right-3 flex items-center space-x-2">
+          <div className="bg-white/90 backdrop-blur-sm rounded-lg px-2 py-1">
+            <HealthScoreBadge score={healthScore} />
+          </div>
+        </div>
+        
+        {/* Save button */}
+        <div className="absolute top-3 left-3">
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onSave(business);
+            }}
+            className={`w-8 h-8 rounded-full backdrop-blur-sm border transition-all duration-200 flex items-center justify-center ${
+              isSaved 
+                ? 'bg-red-500 border-red-400 text-white shadow-lg' 
+                : 'bg-white/90 border-white/20 text-neutral-600 hover:bg-red-50 hover:text-red-500'
+            }`}
+            title={isSaved ? 'Remove from saved' : 'Save business'}
+          >
+            <svg className="w-4 h-4" fill={isSaved ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.682l-1.318-1.364a4.5 4.5 0 00-6.364 0z" />
+            </svg>
+          </button>
         </div>
       </div>
 
@@ -134,13 +158,25 @@ const BusinessCard = ({ business, onViewDetails }) => {
           )}
         </div>
 
-        {/* Action Button */}
-        <button
-          onClick={() => onViewDetails(business)}
-          className="w-full py-3 px-4 bg-gradient-to-r from-primary-500 to-accent-500 text-white font-semibold rounded-xl hover:from-primary-600 hover:to-accent-600 transition-all duration-300 hover:shadow-lg"
-        >
-          View Opportunities
-        </button>
+        {/* Action Buttons */}
+        <div className="flex space-x-2">
+          <button
+            onClick={() => onViewDetails(business)}
+            className="flex-1 py-3 px-4 bg-gradient-to-r from-primary-500 to-accent-500 text-white font-semibold rounded-xl hover:from-primary-600 hover:to-accent-600 transition-all duration-300 hover:shadow-lg"
+          >
+            View Opportunities
+          </button>
+          
+          <button
+            onClick={() => onSocialSearch(business)}
+            className="px-4 py-3 bg-neutral-100 hover:bg-neutral-200 text-neutral-700 rounded-xl transition-all duration-200 flex items-center justify-center group"
+            title="Search social media"
+          >
+            <svg className="w-5 h-5 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+          </button>
+        </div>
       </div>
     </div>
   );
@@ -200,6 +236,10 @@ const FreelancerDashboard = ({ userData, onLogout }) => {
   const [loading, setLoading] = useState(false);
   const [mapError, setMapError] = useState(null);
   const [locationError, setLocationError] = useState(null);
+  const [savedBusinesses, setSavedBusinesses] = useState([]);
+  const [showMobileMenu, setShowMobileMenu] = useState(false);
+  const [showProfileDropdown, setShowProfileDropdown] = useState(false);
+  const [activeView, setActiveView] = useState('dashboard'); // 'dashboard' | 'saved'
   const [filters, setFilters] = useState({
     hasWebsite: false,
     hasPhone: false,
@@ -225,6 +265,60 @@ const FreelancerDashboard = ({ userData, onLogout }) => {
   const clearBusinessTypes = () => {
     setSelectedBusinessTypes([]);
   };
+
+  // Save/unsave business functionality
+  const toggleSaveBusiness = (business) => {
+    setSavedBusinesses(prev => {
+      const isAlreadySaved = prev.find(b => b.id === business.id);
+      if (isAlreadySaved) {
+        // Remove from saved
+        return prev.filter(b => b.id !== business.id);
+      } else {
+        // Add to saved
+        return [...prev, business];
+      }
+    });
+  };
+
+  const isBusinessSaved = (businessId) => {
+    return savedBusinesses.some(b => b.id === businessId);
+  };
+
+  // Social media search functionality
+  const searchSocialMedia = (business) => {
+    const query = `${business.name} ${business.address || ''} social media`;
+    const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(query)}`;
+    window.open(searchUrl, '_blank', 'noopener,noreferrer');
+  };
+
+  // Mobile menu management
+  const toggleMobileMenu = () => {
+    setShowMobileMenu(!showMobileMenu);
+  };
+
+  const closeMobileMenu = () => {
+    setShowMobileMenu(false);
+  };
+
+  // Profile dropdown management
+  const toggleProfileDropdown = () => {
+    setShowProfileDropdown(!showProfileDropdown);
+  };
+
+  // Close dropdowns when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (!event.target.closest('.mobile-menu') && !event.target.closest('.hamburger-btn')) {
+        setShowMobileMenu(false);
+      }
+      if (!event.target.closest('.profile-dropdown') && !event.target.closest('.profile-btn')) {
+        setShowProfileDropdown(false);
+      }
+    };
+    
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   // Debug: Log userData when component mounts
   useEffect(() => {
@@ -792,6 +886,16 @@ const FreelancerDashboard = ({ userData, onLogout }) => {
         <div className="max-w-7xl mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
+              {/* Mobile hamburger menu */}
+              <button
+                onClick={toggleMobileMenu}
+                className="md:hidden hamburger-btn p-2 -ml-2 rounded-lg hover:bg-neutral-100 transition-colors"
+              >
+                <svg className="w-6 h-6 text-neutral-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={showMobileMenu ? "M6 18L18 6M6 6l12 12" : "M4 6h16M4 12h16M4 18h16"} />
+                </svg>
+              </button>
+              
               <h1 className="text-2xl font-bold bg-gradient-to-r from-primary-600 to-accent-600 bg-clip-text text-transparent">
                 ClientAIMap
               </h1>
@@ -801,267 +905,424 @@ const FreelancerDashboard = ({ userData, onLogout }) => {
               </div>
             </div>
             
-            <div className="flex items-center space-x-4">
-              <div className="hidden md:flex items-center space-x-2">
+            {/* Desktop Navigation */}
+            <div className="hidden md:flex items-center space-x-6">
+              <button
+                onClick={() => setActiveView('dashboard')}
+                className={`px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
+                  activeView === 'dashboard' 
+                    ? 'text-primary-600 bg-primary-50' 
+                    : 'text-neutral-600 hover:text-neutral-800 hover:bg-neutral-50'
+                }`}
+              >
+                Dashboard
+              </button>
+              
+              <button
+                onClick={() => setActiveView('saved')}
+                className={`px-3 py-2 text-sm font-medium rounded-lg transition-colors flex items-center space-x-1 ${
+                  activeView === 'saved' 
+                    ? 'text-primary-600 bg-primary-50' 
+                    : 'text-neutral-600 hover:text-neutral-800 hover:bg-neutral-50'
+                }`}
+              >
+                <span>Saved Leads</span>
+                {savedBusinesses.length > 0 && (
+                  <span className="bg-primary-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                    {savedBusinesses.length}
+                  </span>
+                )}
+              </button>
+              
+              <div className="flex items-center space-x-3">
                 <div className="w-8 h-8 bg-gradient-to-r from-primary-500 to-accent-500 rounded-full flex items-center justify-center text-white text-sm font-semibold">
                   {(userData?.name || userData?.user?.user_metadata?.name || userData?.user?.email)?.charAt(0)?.toUpperCase() || 'U'}
                 </div>
                 <span className="text-sm font-medium text-neutral-700">
                   {userData?.name || userData?.user?.user_metadata?.name || userData?.user?.email || 'User'}
                 </span>
+                <button
+                  onClick={onLogout}
+                  className="px-4 py-2 text-sm text-neutral-500 hover:text-neutral-700 hover:bg-neutral-100 rounded-lg transition-all duration-200"
+                >
+                  Logout
+                </button>
               </div>
+            </div>
+            
+            {/* Mobile Profile */}
+            <div className="md:hidden relative">
               <button
-                onClick={onLogout}
-                className="px-4 py-2 text-sm text-neutral-500 hover:text-neutral-700 hover:bg-neutral-100 rounded-lg transition-all duration-200"
+                onClick={toggleProfileDropdown}
+                className="profile-btn w-10 h-10 bg-gradient-to-r from-primary-500 to-accent-500 rounded-full flex items-center justify-center text-white text-sm font-semibold shadow-lg"
               >
-                Logout
+                {(userData?.name || userData?.user?.user_metadata?.name || userData?.user?.email)?.charAt(0)?.toUpperCase() || 'U'}
               </button>
+              
+              {/* Mobile Profile Dropdown */}
+              {showProfileDropdown && (
+                <div className="profile-dropdown absolute right-0 top-12 w-48 bg-white rounded-2xl border border-neutral-200 shadow-xl py-2 z-50">
+                  <div className="px-4 py-3 border-b border-neutral-100">
+                    <p className="text-sm font-medium text-neutral-800 truncate">
+                      {userData?.name || userData?.user?.user_metadata?.name || userData?.user?.email || 'User'}
+                    </p>
+                  </div>
+                  <button
+                    onClick={onLogout}
+                    className="w-full px-4 py-3 text-left text-sm text-red-600 hover:bg-red-50 transition-colors"
+                  >
+                    Logout
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         </div>
+        
+        {/* Mobile Menu Sidebar */}
+        {showMobileMenu && (
+          <>
+            {/* Backdrop */}
+            <div className="fixed inset-0 bg-black/20 z-40 md:hidden" onClick={closeMobileMenu}></div>
+            
+            {/* Sidebar */}
+            <div className="mobile-menu fixed left-0 top-0 h-full w-80 bg-white border-r border-neutral-200 z-50 md:hidden transform transition-transform duration-300">
+              <div className="p-6">
+                <div className="flex items-center justify-between mb-8">
+                  <h2 className="text-xl font-bold bg-gradient-to-r from-primary-600 to-accent-600 bg-clip-text text-transparent">
+                    Menu
+                  </h2>
+                  <button
+                    onClick={closeMobileMenu}
+                    className="p-2 rounded-lg hover:bg-neutral-100 transition-colors"
+                  >
+                    <svg className="w-6 h-6 text-neutral-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+                
+                <div className="space-y-2">
+                  <button
+                    onClick={() => {
+                      setActiveView('dashboard');
+                      closeMobileMenu();
+                    }}
+                    className={`w-full px-4 py-3 text-left rounded-xl transition-colors ${
+                      activeView === 'dashboard' 
+                        ? 'bg-primary-50 text-primary-600 font-medium' 
+                        : 'text-neutral-700 hover:bg-neutral-50'
+                    }`}
+                  >
+                    📊 Dashboard
+                  </button>
+                  
+                  <button
+                    onClick={() => {
+                      setActiveView('saved');
+                      closeMobileMenu();
+                    }}
+                    className={`w-full px-4 py-3 text-left rounded-xl transition-colors flex items-center justify-between ${
+                      activeView === 'saved' 
+                        ? 'bg-primary-50 text-primary-600 font-medium' 
+                        : 'text-neutral-700 hover:bg-neutral-50'
+                    }`}
+                  >
+                    <span>🔖 Saved Leads</span>
+                    {savedBusinesses.length > 0 && (
+                      <span className="bg-primary-500 text-white text-xs rounded-full w-6 h-6 flex items-center justify-center">
+                        {savedBusinesses.length}
+                      </span>
+                    )}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </>
+        )}
       </div>
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-6 py-8">
-        <div className="grid lg:grid-cols-3 gap-8">
-          {/* Left Sidebar - Search & Filters */}
-          <div className="lg:col-span-1 space-y-6">
-            {/* Welcome Card */}
-            <div className="bg-gradient-to-r from-primary-500 to-accent-500 rounded-2xl p-6 text-white">
-              <h2 className="text-xl font-bold mb-2">
-                Welcome back, {userData?.name || userData?.user?.user_metadata?.name?.split(' ')[0] || 'there'}!
-              </h2>
-              <p className="text-primary-100">
-                Discover opportunities in your area and connect with businesses that need your skills.
-              </p>
-              
-              {/* Domain Restriction Help */}
-              {mapError && mapError.includes('RefererNotAllowed') && (
-                <div className="mt-4 p-3 bg-white/10 border border-white/20 rounded-lg">
-                  <p className="text-sm font-medium text-white mb-2">🔧 Map Configuration Issue</p>
-                  <div className="text-xs text-primary-100 space-y-1">
-                    <p>• Go to Google Cloud Console → APIs & Services → Credentials</p>
-                    <p>• Click your API key → Application restrictions</p>
-                    <p>• Add domain: <span className="font-mono bg-white/20 px-1 rounded">{window.location.origin}</span></p>
-                    <p>• Or set to "None" for development</p>
-                  </div>
-                </div>
-              )}
-            </div>
-
-
-
-            {/* Search Controls */}
-            <div className="bg-white rounded-2xl border border-neutral-200 p-6">
-              <h3 className="font-bold text-lg text-neutral-800 mb-4">Search Businesses</h3>
-              
-              {/* Business Type Selection */}
-              <div className="mb-4">
-                <div className="flex items-center justify-between mb-2">
-                  <label className="block text-sm font-semibold text-neutral-700">
-                    Business Types ({selectedBusinessTypes.length} selected)
-                  </label>
-                  {selectedBusinessTypes.length > 0 && (
-                    <button
-                      onClick={clearBusinessTypes}
-                      className="text-xs text-primary-600 hover:text-primary-700 font-medium"
-                    >
-                      Clear All
-                    </button>
-                  )}
-                </div>
-                <p className="text-xs text-neutral-500 mb-3">
-                  Select multiple types or none to show all businesses
+        {activeView === 'dashboard' ? (
+          <div className="grid lg:grid-cols-3 gap-8">
+            {/* Left Sidebar - Search & Filters */}
+            <div className="lg:col-span-1 space-y-6">
+              {/* Welcome Card */}
+              <div className="bg-gradient-to-r from-primary-500 to-accent-500 rounded-2xl p-6 text-white">
+                <h2 className="text-xl font-bold mb-2">
+                  Welcome back, {userData?.name || userData?.user?.user_metadata?.name?.split(' ')[0] || 'there'}!
+                </h2>
+                <p className="text-primary-100">
+                  Discover opportunities in your area and connect with businesses that need your skills.
                 </p>
-                <div className="grid grid-cols-2 gap-2 mb-3">
-                  {BUSINESS_TYPES.slice(0, -1).map(type => (
-                    <button
-                      key={type.id}
-                      onClick={() => toggleBusinessType(type.id)}
-                      className={`p-3 rounded-xl border text-sm font-medium transition-all duration-200 ${
-                        selectedBusinessTypes.includes(type.id)
-                          ? 'border-primary-500 bg-primary-50 text-primary-700 ring-2 ring-primary-200'
-                          : 'border-neutral-200 hover:border-primary-300 text-neutral-600'
-                      }`}
-                    >
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <div className="text-lg mb-1">{type.icon}</div>
-                          {type.label}
-                        </div>
-                        {selectedBusinessTypes.includes(type.id) && (
-                          <div className="text-primary-500 text-sm">✓</div>
-                        )}
-                      </div>
-                    </button>
-                  ))}
-                </div>
                 
-                {/* Custom Business Type */}
-                <button
-                  onClick={() => toggleBusinessType('custom')}
-                  className={`w-full p-3 rounded-xl border text-sm font-medium transition-all duration-200 mb-3 ${
-                    selectedBusinessTypes.includes('custom')
-                      ? 'border-primary-500 bg-primary-50 text-primary-700 ring-2 ring-primary-200'
-                      : 'border-neutral-200 hover:border-primary-300 text-neutral-600'
-                  }`}
-                >
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <div className="text-lg mb-1">✏️</div>
-                      Custom
+                {/* Domain Restriction Help */}
+                {mapError && mapError.includes('RefererNotAllowed') && (
+                  <div className="mt-4 p-3 bg-white/10 border border-white/20 rounded-lg">
+                    <p className="text-sm font-medium text-white mb-2">🔧 Map Configuration Issue</p>
+                    <div className="text-xs text-primary-100 space-y-1">
+                      <p>• Go to Google Cloud Console → APIs & Services → Credentials</p>
+                      <p>• Click your API key → Application restrictions</p>
+                      <p>• Add domain: <span className="font-mono bg-white/20 px-1 rounded">{window.location.origin}</span></p>
+                      <p>• Or set to "None" for development</p>
                     </div>
-                    {selectedBusinessTypes.includes('custom') && (
-                      <div className="text-primary-500 text-sm">✓</div>
+                  </div>
+                )}
+              </div>
+
+              {/* Search Controls */}
+              <div className="bg-white rounded-2xl border border-neutral-200 p-6">
+                <h3 className="font-bold text-lg text-neutral-800 mb-4">Search Businesses</h3>
+                
+                {/* Business Type Selection */}
+                <div className="mb-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <label className="block text-sm font-semibold text-neutral-700">
+                      Business Types ({selectedBusinessTypes.length} selected)
+                    </label>
+                    {selectedBusinessTypes.length > 0 && (
+                      <button
+                        onClick={clearBusinessTypes}
+                        className="text-xs text-primary-600 hover:text-primary-700 font-medium"
+                      >
+                        Clear All
+                      </button>
                     )}
                   </div>
-                </button>
-                
-                {selectedBusinessTypes.includes('custom') && (
-                  <input
-                    type="text"
-                    value={customBusinessType}
-                    onChange={(e) => setCustomBusinessType(e.target.value)}
-                    placeholder="Enter business type..."
-                    className="w-full mt-3 p-3 border border-neutral-300 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                  />
-                )}
-              </div>
-
-              {/* Max Results */}
-              <div className="mb-6">
-                <label className="block text-sm font-semibold text-neutral-700 mb-2">
-                  Max Results
-                </label>
-                <select
-                  value={maxResults}
-                  onChange={(e) => setMaxResults(Number(e.target.value))}
-                  className="w-full p-3 border border-neutral-300 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                >
-                  <option value={50}>50 results</option>
-                  <option value={75}>75 results</option>
-                  <option value={100}>100 results</option>
-                </select>
-              </div>
-
-              {/* Search Button */}
-              <button
-                onClick={searchBusinesses}
-                disabled={loading || !searchLocation}
-                className="w-full py-3 px-4 bg-gradient-to-r from-primary-500 to-accent-500 text-white font-semibold rounded-xl hover:from-primary-600 hover:to-accent-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 hover:shadow-lg"
-              >
-                {loading ? 'Searching...' : 'Search Businesses'}
-              </button>
-            </div>
-
-            {/* Filters */}
-            <SearchFilters filters={filters} onFiltersChange={setFilters} />
-          </div>
-
-          {/* Right Content - Map & Results */}
-          <div className="lg:col-span-2 space-y-6">
-            {/* Map */}
-            <div className="bg-white rounded-2xl border border-neutral-200 overflow-hidden">
-              <div className="p-4 border-b border-neutral-200">
-                <h3 className="font-bold text-lg text-neutral-800">Search Area</h3>
-                <p className="text-sm text-neutral-500">Click anywhere on the map to change your search location</p>
-                
-                {/* Map Error Notification */}
-                {mapError && (
-                  <div className="mt-3 p-3 bg-red-50 border border-red-200 rounded-lg">
-                    <div className="flex items-start space-x-2">
-                      <div className="text-red-500 text-sm mt-0.5">⚠️</div>
-                      <div className="flex-1">
-                        <p className="text-sm font-medium text-red-800">Map Loading Error</p>
-                        <p className="text-xs text-red-600 mt-1">
-                          {mapError.includes('RefererNotAllowed') || mapError.includes('domain') 
-                            ? 'Your Google Maps API key has domain restrictions. Please check the console for instructions on how to fix this.'
-                            : mapError
-                          }
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                )}
-                
-                {/* Location Error Notification */}
-                {locationError && !mapError && (
-                  <div className="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-                    <div className="flex items-start space-x-2">
-                      <div className="text-yellow-500 text-sm mt-0.5">📍</div>
-                      <div className="flex-1">
-                        <p className="text-sm font-medium text-yellow-800">Location Detection Unavailable</p>
-                        <p className="text-xs text-yellow-600 mt-1">
-                          Using default location (New York). You can click on the map to set your preferred search area.
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
-              
-              {/* Map Container */}
-              <div className="relative">
-                <div ref={mapRef} className="w-full h-96"></div>
-                
-                {/* Map Overlay for when Google Maps fails to load */}
-                {mapError && (
-                  <div className="absolute inset-0 bg-neutral-100 flex items-center justify-center">
-                    <div className="text-center p-6">
-                      <div className="text-4xl mb-3 opacity-50">🗺️</div>
-                      <h4 className="text-lg font-semibold text-neutral-800 mb-2">Map Unavailable</h4>
-                      <p className="text-sm text-neutral-600 mb-3">
-                        There's an issue with the Google Maps configuration.
-                      </p>
-                      <p className="text-xs text-neutral-500">
-                        Check the browser console for detailed troubleshooting steps.
-                      </p>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Results */}
-            <div className="bg-white rounded-2xl border border-neutral-200 p-6">
-              <div className="flex items-center justify-between mb-6">
-                <h3 className="font-bold text-lg text-neutral-800">
-                  Business Results ({businesses.length})
-                </h3>
-                {businesses.length > 0 && (
-                  <div className="text-sm text-neutral-500">
-                    Showing {businesses.length} of {maxResults} results
-                  </div>
-                )}
-              </div>
-
-              {loading ? (
-                <div className="flex items-center justify-center py-12">
-                  <div className="animate-spin w-8 h-8 border-4 border-primary-200 border-t-primary-600 rounded-full"></div>
-                  <span className="ml-3 text-neutral-600">Searching businesses...</span>
-                </div>
-              ) : businesses.length > 0 ? (
-                <div className="grid md:grid-cols-2 gap-6">
-                  {businesses.map(business => (
-                    <BusinessCard
-                      key={business.id}
-                      business={business}
-                      onViewDetails={handleViewDetails}
-                    />
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-12">
-                  <div className="text-6xl mb-4 opacity-50">🔍</div>
-                  <h4 className="text-lg font-semibold text-neutral-800 mb-2">No businesses found</h4>
-                  <p className="text-neutral-500">
-                    Try adjusting your search criteria or selecting a different area on the map.
+                  <p className="text-xs text-neutral-500 mb-3">
+                    Select multiple types or none to show all businesses
                   </p>
+                  <div className="grid grid-cols-2 gap-2 mb-3">
+                    {BUSINESS_TYPES.slice(0, -1).map(type => (
+                      <button
+                        key={type.id}
+                        onClick={() => toggleBusinessType(type.id)}
+                        className={`p-3 rounded-xl border text-sm font-medium transition-all duration-200 ${
+                          selectedBusinessTypes.includes(type.id)
+                            ? 'border-primary-500 bg-primary-50 text-primary-700 ring-2 ring-primary-200'
+                            : 'border-neutral-200 hover:border-primary-300 text-neutral-600'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <div className="text-lg mb-1">{type.icon}</div>
+                            {type.label}
+                          </div>
+                          {selectedBusinessTypes.includes(type.id) && (
+                            <div className="text-primary-500 text-sm">✓</div>
+                          )}
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                  
+                  {/* Custom Business Type */}
+                  <button
+                    onClick={() => toggleBusinessType('custom')}
+                    className={`w-full p-3 rounded-xl border text-sm font-medium transition-all duration-200 mb-3 ${
+                      selectedBusinessTypes.includes('custom')
+                        ? 'border-primary-500 bg-primary-50 text-primary-700 ring-2 ring-primary-200'
+                        : 'border-neutral-200 hover:border-primary-300 text-neutral-600'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <div className="text-lg mb-1">✏️</div>
+                        Custom
+                      </div>
+                      {selectedBusinessTypes.includes('custom') && (
+                        <div className="text-primary-500 text-sm">✓</div>
+                      )}
+                    </div>
+                  </button>
+                  
+                  {selectedBusinessTypes.includes('custom') && (
+                    <input
+                      type="text"
+                      value={customBusinessType}
+                      onChange={(e) => setCustomBusinessType(e.target.value)}
+                      placeholder="Enter business type..."
+                      className="w-full mt-3 p-3 border border-neutral-300 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                    />
+                  )}
                 </div>
-              )}
+
+                {/* Max Results */}
+                <div className="mb-6">
+                  <label className="block text-sm font-semibold text-neutral-700 mb-2">
+                    Max Results
+                  </label>
+                  <select
+                    value={maxResults}
+                    onChange={(e) => setMaxResults(Number(e.target.value))}
+                    className="w-full p-3 border border-neutral-300 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  >
+                    <option value={50}>50 results</option>
+                    <option value={75}>75 results</option>
+                    <option value={100}>100 results</option>
+                  </select>
+                </div>
+
+                {/* Search Button */}
+                <button
+                  onClick={searchBusinesses}
+                  disabled={loading || !searchLocation}
+                  className="w-full py-3 px-4 bg-gradient-to-r from-primary-500 to-accent-500 text-white font-semibold rounded-xl hover:from-primary-600 hover:to-accent-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 hover:shadow-lg"
+                >
+                  {loading ? 'Searching...' : 'Search Businesses'}
+                </button>
+              </div>
+
+              {/* Filters */}
+              <SearchFilters filters={filters} onFiltersChange={setFilters} />
+            </div>
+
+            {/* Right Content - Map & Results */}
+            <div className="lg:col-span-2 space-y-6">
+              {/* Map */}
+              <div className="bg-white rounded-2xl border border-neutral-200 overflow-hidden">
+                <div className="p-4 border-b border-neutral-200">
+                  <h3 className="font-bold text-lg text-neutral-800">Search Area</h3>
+                  <p className="text-sm text-neutral-500">Click anywhere on the map to change your search location</p>
+                  
+                  {/* Map Error Notification */}
+                  {mapError && (
+                    <div className="mt-3 p-3 bg-red-50 border border-red-200 rounded-lg">
+                      <div className="flex items-start space-x-2">
+                        <div className="text-red-500 text-sm mt-0.5">⚠️</div>
+                        <div className="flex-1">
+                          <p className="text-sm font-medium text-red-800">Map Loading Error</p>
+                          <p className="text-xs text-red-600 mt-1">
+                            {mapError.includes('RefererNotAllowed') || mapError.includes('domain') 
+                              ? 'Your Google Maps API key has domain restrictions. Please check the console for instructions on how to fix this.'
+                              : mapError
+                            }
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* Location Error Notification */}
+                  {locationError && !mapError && (
+                    <div className="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                      <div className="flex items-start space-x-2">
+                        <div className="text-yellow-500 text-sm mt-0.5">📍</div>
+                        <div className="flex-1">
+                          <p className="text-sm font-medium text-yellow-800">Location Detection Unavailable</p>
+                          <p className="text-xs text-yellow-600 mt-1">
+                            Using default location (New York). You can click on the map to set your preferred search area.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+                
+                {/* Map Container */}
+                <div className="relative">
+                  <div ref={mapRef} className="w-full h-96"></div>
+                  
+                  {/* Map Overlay for when Google Maps fails to load */}
+                  {mapError && (
+                    <div className="absolute inset-0 bg-neutral-100 flex items-center justify-center">
+                      <div className="text-center p-6">
+                        <div className="text-4xl mb-3 opacity-50">🗺️</div>
+                        <h4 className="text-lg font-semibold text-neutral-800 mb-2">Map Unavailable</h4>
+                        <p className="text-sm text-neutral-600 mb-3">
+                          There's an issue with the Google Maps configuration.
+                        </p>
+                        <p className="text-xs text-neutral-500">
+                          Check the browser console for detailed troubleshooting steps.
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Results */}
+              <div className="bg-white rounded-2xl border border-neutral-200 p-6">
+                <div className="flex items-center justify-between mb-6">
+                  <h3 className="font-bold text-lg text-neutral-800">
+                    Business Results ({businesses.length})
+                  </h3>
+                  {businesses.length > 0 && (
+                    <div className="text-sm text-neutral-500">
+                      Showing {businesses.length} of {maxResults} results
+                    </div>
+                  )}
+                </div>
+
+                {loading ? (
+                  <div className="flex items-center justify-center py-12">
+                    <div className="animate-spin w-8 h-8 border-4 border-primary-200 border-t-primary-600 rounded-full"></div>
+                    <span className="ml-3 text-neutral-600">Searching businesses...</span>
+                  </div>
+                ) : businesses.length > 0 ? (
+                  <div className="grid md:grid-cols-2 gap-6">
+                    {businesses.map(business => (
+                      <BusinessCard
+                        key={business.id}
+                        business={business}
+                        onViewDetails={handleViewDetails}
+                        onSave={toggleSaveBusiness}
+                        onSocialSearch={searchSocialMedia}
+                        isSaved={isBusinessSaved(business.id)}
+                      />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-12">
+                    <div className="text-6xl mb-4 opacity-50">🔍</div>
+                    <h4 className="text-lg font-semibold text-neutral-800 mb-2">No businesses found</h4>
+                    <p className="text-neutral-500">
+                      Try adjusting your search criteria or selecting a different area on the map.
+                    </p>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
-        </div>
+        ) : (
+          /* Saved Businesses View */
+          <div className="max-w-6xl mx-auto">
+            <div className="mb-8">
+              <h2 className="text-3xl font-bold text-neutral-800 mb-2">Saved Leads</h2>
+              <p className="text-neutral-600">Businesses you've bookmarked for follow-up opportunities</p>
+            </div>
+            
+            {savedBusinesses.length > 0 ? (
+              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {savedBusinesses.map(business => (
+                  <BusinessCard
+                    key={business.id}
+                    business={business}
+                    onViewDetails={handleViewDetails}
+                    onSave={toggleSaveBusiness}
+                    onSocialSearch={searchSocialMedia}
+                    isSaved={true}
+                  />
+                ))}
+              </div>
+            ) : (
+              <div className="bg-white rounded-2xl border border-neutral-200 p-12 text-center">
+                <div className="text-6xl mb-4 opacity-50">🔖</div>
+                <h3 className="text-xl font-semibold text-neutral-800 mb-2">No saved leads yet</h3>
+                <p className="text-neutral-500 mb-6">
+                  Start exploring businesses and save the ones that interest you for future opportunities.
+                </p>
+                <button
+                  onClick={() => setActiveView('dashboard')}
+                  className="px-6 py-3 bg-gradient-to-r from-primary-500 to-accent-500 text-white font-semibold rounded-xl hover:from-primary-600 hover:to-accent-600 transition-all duration-300 hover:shadow-lg"
+                >
+                  Explore Businesses
+                </button>
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );
