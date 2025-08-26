@@ -286,9 +286,19 @@ const FeatureCard = ({ feature, isVisible, index }) => {
         <div className="absolute inset-0 bg-gradient-to-br from-primary-500/5 to-accent-500/5 rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
         
         <div className="relative z-10">
-          {/* Mockup with better spacing */}
+          {/* Image placeholder - INSERT YOUR IMAGE HERE */}
           <div className="mb-8 transform group-hover:scale-105 transition-transform duration-500">
-            {feature.mockup}
+            <div className="w-full h-48 bg-gradient-to-br from-neutral-100 to-neutral-200 rounded-2xl flex items-center justify-center border-2 border-dashed border-neutral-300 relative overflow-hidden">
+              {/* Replace this div with your image component: */}
+              {/* <img src="your-image-path.jpg" alt={feature.title} className="w-full h-full object-cover rounded-2xl" /> */}
+              
+              {/* Placeholder content - remove when adding your image */}
+              <div className="text-center text-neutral-500">
+                <div className="text-4xl mb-2">{feature.icon}</div>
+                <p className="text-sm font-medium">Insert your image here</p>
+                <p className="text-xs opacity-75">Recommended: 400x200px</p>
+              </div>
+            </div>
           </div>
           
           {/* Content */}
@@ -329,25 +339,25 @@ const FeaturesSection = () => {
     {
       title: "Smart Location Search",
       description: "Explore opportunities anywhere with our intelligent map-based discovery system that finds hidden gems and untapped markets.",
-      mockup: <MapMockup />,
+      icon: "🗺️",
       delay: "delay-100"
     },
     {
       title: "AI-Powered Filters",
       description: "Refine your search with machine learning filters that understand your preferences and requirements for perfect matches.",
-      mockup: <FilterMockup />,
+      icon: "🎯",
       delay: "delay-200"
     },
     {
       title: "Opportunity Scanner",
       description: "Our AI continuously scans for emerging opportunities and market gaps others haven't discovered yet, giving you the edge.",
-      mockup: <ScanMockup />,
+      icon: "🔍",
       delay: "delay-300"
     },
     {
       title: "Profile Optimization",
       description: "Get AI-driven insights to improve your profile and increase your chances of landing great projects with data-backed recommendations.",
-      mockup: <WeakPointsMockup />,
+      icon: "⚡",
       delay: "delay-400"
     }
   ];

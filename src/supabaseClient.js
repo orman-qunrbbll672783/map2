@@ -381,3 +381,175 @@ export const isBusinessSaved = async (businessId) => {
     return { success: false, error: error.message, isSaved: false };
   }
 };
+
+// Google Maps Business Verification Functions
+export const extractPlaceIdFromGoogleMapsUrl = (url) => {
+  try {
+    // Handle different Google Maps URL formats
+    const patterns = [
+      /place_id:([A-Za-z0-9_-]+)/,
+      /data=.*?1s([A-Za-z0-9_-]+)/,
+      /cid=([0-9]+)/
+    ];
+    
+    for (const pattern of patterns) {
+      const match = url.match(pattern);
+      if (match) {
+        return match[1];
+      }
+    }
+    
+    return null;
+  } catch (error) {
+    console.error('Error extracting place ID:', error);
+    return null;
+  }
+};
+
+export const verifyGoogleMapsLink = async (googleMapsUrl) => {
+  try {
+    const placeId = extractPlaceIdFromGoogleMapsUrl(googleMapsUrl);
+    
+    if (!placeId) {
+      return { 
+        success: false, 
+        error: 'Invalid Google Maps URL. Please ensure you\'re using a valid Google Maps business link.' 
+      };
+    }
+
+    // For now, we'll create mock data structure
+    // In production, you would integrate with Google Places API
+    const mockBusinessData = {
+      placeId: placeId,
+      name: 'Sample Business Name',
+      address: '123 Business Street, City, State 12345',
+      phone: '+1 (555) 123-4567',
+      website: 'https://samplebusiness.com',
+      category: 'Restaurant',
+      rating: 4.5,
+      totalRatings: 127,
+      verified: true,
+      extractedAt: new Date().toISOString()
+    };
+
+    return {
+      success: true,
+      data: mockBusinessData
+    };
+  } catch (error) {
+    console.error('Error verifying Google Maps link:', error);
+    return {
+      success: false,
+      error: 'Failed to verify Google Maps link. Please try again.'
+    };
+  }
+};
+
+export const saveVerifiedBusinessData = async (businessData, description = '') => {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    if (!user) {
+      throw new Error('User not authenticated');
+    }
+
+    const { data, error } = await supabase
+      .from('verified_businesses')
+      .insert([
+        {
+          user_id: user.id,
+          place_id: businessData.placeId,
+          business_name: businessData.name,
+          address: businessData.address,
+          phone: businessData.phone,
+          website: businessData.website,
+          category: businessData.category,
+          rating: businessData.rating,
+          total_ratings: businessData.totalRatings,
+          description: description,
+          google_maps_data: businessData,
+          verified: true,
+          created_at: new Date().toISOString()
+        }
+      ])
+      .select()
+      .single();
+
+    if (error) throw error;
+    
+    return { success: true, data };
+  } catch (error) {
+    console.error('Error saving verified business data:', error);
+    return { success: false, error: error.message };
+  }
+};
+
+export const getVerifiedBusinessProfile = async (userId = null) => {
+  try {
+    const targetUserId = userId || (await supabase.auth.getUser()).data.user?.id;
+    
+    if (!targetUserId) {
+      throw new Error('User not authenticated');
+    }
+
+    const { data, error } = await supabase
+      .from('verified_businesses')
+      .select('*')
+      .eq('user_id', targetUserId)
+      .eq('verified', true)
+      .single();
+
+    if (error && error.code !== 'PGRST116') {
+      throw error;
+    }
+    
+    return { success: true, data: data || null };
+  } catch (error) {
+    console.error('Error getting verified business profile:', error);
+    return { success: false, error: error.message, data: null };
+  }
+};
+
+export const getAllVerifiedBusinesses = async () => {
+  try {
+    const { data, error } = await supabase
+      .from('verified_businesses')
+      .select('*')
+      .eq('verified', true)
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+    
+    return { success: true, data: data || [] };
+  } catch (error) {
+    console.error('Error getting all verified businesses:', error);
+    return { success: false, error: error.message, data: [] };
+  }
+};
+
+export const updateBusinessDescription = async (description) => {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    if (!user) {
+      throw new Error('User not authenticated');
+    }
+
+    const { data, error } = await supabase
+      .from('verified_businesses')
+      .update({ 
+        description: description,
+        updated_at: new Date().toISOString()
+      })
+      .eq('user_id', user.id)
+      .select()
+      .single();
+
+    if (error) throw error;
+    
+    return { success: true, data };
+  } catch (error) {
+    console.error('Error updating business description:', error);
+    return { success: false, error: error.message };
+  }
+};

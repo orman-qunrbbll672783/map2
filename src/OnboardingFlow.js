@@ -7,6 +7,7 @@ import {
   BusinessNameStep, 
   AccountDetailsStep, 
   BusinessNameAndAccountStep,
+  GoogleMapsVerificationStep,
   ReviewStep, 
   ProcessingStep, 
   SuccessStep 
@@ -20,6 +21,9 @@ const OnboardingFlow = ({ userType, onClose, onComplete }) => {
     purpose: '',
     businessType: '',
     businessName: '',
+    googleMapsUrl: '',
+    verifiedBusinessData: null,
+    businessDescription: '',
     socialLinks: {
       linkedin: '',
       instagram: '',
@@ -33,7 +37,7 @@ const OnboardingFlow = ({ userType, onClose, onComplete }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState({});
 
-  const totalSteps = userType === 'freelancer' ? 3 : 3;
+  const totalSteps = userType === 'freelancer' ? 3 : 4;
 
   // Update form data
   const updateFormData = (field, value) => {
@@ -281,10 +285,12 @@ const OnboardingFlow = ({ userType, onClose, onComplete }) => {
       case 1:
         return <BusinessTypeStep formData={formData} updateFormData={updateFormData} errors={errors} />;
       case 2:
-        return <SocialLinksStep formData={formData} updateFormData={updateFormData} errors={errors} />;
+        return <GoogleMapsVerificationStep formData={formData} updateFormData={updateFormData} errors={errors} />;
       case 3:
-        return <BusinessNameAndAccountStep formData={formData} updateFormData={updateFormData} errors={errors} onGoogleSignUp={handleGoogleSignUp} />;
+        return <SocialLinksStep formData={formData} updateFormData={updateFormData} errors={errors} />;
       case 4:
+        return <BusinessNameAndAccountStep formData={formData} updateFormData={updateFormData} errors={errors} onGoogleSignUp={handleGoogleSignUp} />;
+      case 5:
         return isLoading ? <ProcessingStep isLoading={isLoading} /> : <SuccessStep userType="business" />;
       default:
         return null;

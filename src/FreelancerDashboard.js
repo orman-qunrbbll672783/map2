@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { getSavedBusinesses, saveBusinessToSupabase, removeSavedBusiness } from './supabaseClient';
+import { getSavedBusinesses, saveBusinessToSupabase, removeSavedBusiness, getAllVerifiedBusinesses } from './supabaseClient';
 import ProfileSection from './ProfileSection';
+import { VerifiedBusinessCard, VerificationBadge } from './components/VerificationBadge';
 
 // Business type options for search
 const BUSINESS_TYPES = [
@@ -247,10 +248,12 @@ const FreelancerDashboard = ({ userData, onLogout }) => {
   const [locationError, setLocationError] = useState(null);
   const [savedBusinesses, setSavedBusinesses] = useState([]);
   const [loadingSavedBusinesses, setLoadingSavedBusinesses] = useState(true);
+  const [verifiedBusinesses, setVerifiedBusinesses] = useState([]);
+  const [loadingVerifiedBusinesses, setLoadingVerifiedBusinesses] = useState(true);
   const [savingBusiness, setSavingBusiness] = useState(null); // Track which business is being saved/unsaved
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [showProfileDropdown, setShowProfileDropdown] = useState(false);
-  const [activeView, setActiveView] = useState('dashboard'); // 'dashboard' | 'saved' | 'profile'
+  const [activeView, setActiveView] = useState('dashboard'); // 'dashboard' | 'saved' | 'verified' | 'profile'
   const [filters, setFilters] = useState({
     hasWebsite: false,
     hasPhone: false,
@@ -382,8 +385,26 @@ const FreelancerDashboard = ({ userData, onLogout }) => {
       
       setLoadingSavedBusinesses(false);
     };
+
+    const loadVerifiedBusinesses = async () => {
+      console.log('🏢 Loading verified businesses from Supabase...');
+      setLoadingVerifiedBusinesses(true);
+      
+      const result = await getAllVerifiedBusinesses();
+      
+      if (result.success) {
+        console.log('✅ Loaded verified businesses:', result.data.length);
+        setVerifiedBusinesses(result.data);
+      } else {
+        console.error('❌ Failed to load verified businesses:', result.error);
+        setVerifiedBusinesses([]);
+      }
+      
+      setLoadingVerifiedBusinesses(false);
+    };
     
     loadSavedBusinesses();
+    loadVerifiedBusinesses();
   }, []);
 
   // Initialize map and get user location
@@ -996,6 +1017,22 @@ const FreelancerDashboard = ({ userData, onLogout }) => {
               </button>
               
               <button
+                onClick={() => setActiveView('verified')}
+                className={`px-3 py-2 text-sm font-medium rounded-lg transition-colors flex items-center space-x-1 ${
+                  activeView === 'verified' 
+                    ? 'text-primary-600 bg-primary-50' 
+                    : 'text-neutral-600 hover:text-neutral-800 hover:bg-neutral-50'
+                }`}
+              >
+                <span>Verified Businesses</span>
+                {!loadingVerifiedBusinesses && verifiedBusinesses.length > 0 && (
+                  <span className="bg-green-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                    {verifiedBusinesses.length}
+                  </span>
+                )}
+              </button>
+              
+              <button
                 onClick={() => setActiveView('profile')}
                 className={`px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
                   activeView === 'profile' 
@@ -1104,6 +1141,25 @@ const FreelancerDashboard = ({ userData, onLogout }) => {
                     {!loadingSavedBusinesses && savedBusinesses.length > 0 && (
                       <span className="bg-primary-500 text-white text-xs rounded-full w-6 h-6 flex items-center justify-center">
                         {savedBusinesses.length}
+                      </span>
+                    )}
+                  </button>
+                  
+                  <button
+                    onClick={() => {
+                      setActiveView('verified');
+                      closeMobileMenu();
+                    }}
+                    className={`w-full px-4 py-3 text-left rounded-xl transition-colors flex items-center justify-between ${
+                      activeView === 'verified' 
+                        ? 'bg-primary-50 text-primary-600 font-medium' 
+                        : 'text-neutral-700 hover:bg-neutral-50'
+                    }`}
+                  >
+                    <span>🏆 Verified Businesses</span>
+                    {!loadingVerifiedBusinesses && verifiedBusinesses.length > 0 && (
+                      <span className="bg-green-500 text-white text-xs rounded-full w-6 h-6 flex items-center justify-center">
+                        {verifiedBusinesses.length}
                       </span>
                     )}
                   </button>
@@ -1381,6 +1437,56 @@ const FreelancerDashboard = ({ userData, onLogout }) => {
             </div>
             
             <ProfileSection userData={userData} />
+          </div>
+        ) : activeView === 'verified' ? (
+          /* Verified Businesses View */
+          <div className="max-w-6xl mx-auto">
+            <div className="mb-8">
+              <h2 className="text-3xl font-bold text-neutral-800 mb-2">Verified Businesses</h2>
+              <p className="text-neutral-600">Google Maps verified businesses looking for freelancers</p>
+            </div>
+            
+            {verifiedBusinesses.length > 0 ? (
+              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {verifiedBusinesses.map(business => (
+                  <VerifiedBusinessCard
+                    key={business.id}
+                    business={business}
+                    onClick={() => handleViewDetails(business)}
+                    className="hover:scale-105 transition-transform duration-300"
+                  />
+                ))}
+              </div>
+            ) : loadingVerifiedBusinesses ? (
+              <div className="bg-white rounded-2xl border border-neutral-200 p-12 text-center">
+                <div className="flex items-center justify-center space-x-3">
+                  <div className="animate-spin w-8 h-8 border-4 border-green-200 border-t-green-600 rounded-full"></div>
+                  <span className="text-neutral-600">Loading verified businesses...</span>
+                </div>
+              </div>
+            ) : (
+              <div className="bg-white rounded-2xl border border-neutral-200 p-12 text-center">
+                <div className="text-6xl mb-4 opacity-50">🏆</div>
+                <h3 className="text-xl font-semibold text-neutral-800 mb-2">No verified businesses yet</h3>
+                <p className="text-neutral-500 mb-6">
+                  Verified businesses with Google Maps presence will appear here when they register and need freelancer services.
+                </p>
+                <div className="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-2xl p-6 max-w-md mx-auto">
+                  <div className="flex items-start space-x-3">
+                    <div className="text-2xl">🎆</div>
+                    <div className="text-left">
+                      <h4 className="font-semibold text-green-800 mb-2">Why Verified Businesses?</h4>
+                      <ul className="text-green-700 text-sm space-y-1">
+                        <li>• Google Maps verified legitimacy</li>
+                        <li>• Real business contact information</li>
+                        <li>• Higher quality opportunities</li>
+                        <li>• Established business presence</li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         ) : (
           /* Saved Businesses View */

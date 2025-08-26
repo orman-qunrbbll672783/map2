@@ -93,22 +93,22 @@ const ProfileSection = ({ userData, isVisible = true }) => {
   };
 
   const OverviewTab = () => (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* User Type & Purpose */}
-      <div className={`bg-gradient-to-r ${config.bgGradient} rounded-2xl p-6 border border-neutral-200`}>
-        <div className="flex items-center space-x-4 mb-4">
-          <div className="text-4xl">{config.icon}</div>
-          <div>
-            <h3 className="text-xl font-bold text-neutral-800">{config.title}</h3>
-            <p className="text-neutral-600">Member since {formatDate(profileData.createdAt)}</p>
+      <div className={`bg-gradient-to-r ${config.bgGradient} rounded-2xl p-4 sm:p-6 border border-neutral-200`}>
+        <div className="flex flex-col sm:flex-row items-center sm:items-start space-y-3 sm:space-y-0 sm:space-x-4 mb-4">
+          <div className="text-3xl sm:text-4xl">{config.icon}</div>
+          <div className="text-center sm:text-left">
+            <h3 className="text-lg sm:text-xl font-bold text-neutral-800">{config.title}</h3>
+            <p className="text-neutral-600 text-sm sm:text-base">Member since {formatDate(profileData.createdAt)}</p>
           </div>
         </div>
         
         {profileData.userType === 'freelancer' ? (
           <div className="space-y-3">
-            <div className="flex items-center space-x-2">
-              <span className="font-medium text-neutral-700">Purpose:</span>
-              <span className="text-neutral-600">{getPurposeLabel(profileData.purpose)}</span>
+            <div className="flex flex-col sm:flex-row sm:items-center space-y-1 sm:space-y-0 sm:space-x-2">
+              <span className="font-medium text-neutral-700 text-sm sm:text-base">Purpose:</span>
+              <span className="text-neutral-600 text-sm sm:text-base">{getPurposeLabel(profileData.purpose)}</span>
             </div>
             {profileData.purpose === 'other' && profileData.customPurpose && (
               <div className="bg-white/50 rounded-lg p-3">
@@ -118,9 +118,9 @@ const ProfileSection = ({ userData, isVisible = true }) => {
           </div>
         ) : (
           <div className="space-y-3">
-            <div className="flex items-center space-x-2">
-              <span className="font-medium text-neutral-700">Business Type:</span>
-              <span className="text-neutral-600">{getBusinessTypeLabel(profileData.businessType)}</span>
+            <div className="flex flex-col sm:flex-row sm:items-center space-y-1 sm:space-y-0 sm:space-x-2">
+              <span className="font-medium text-neutral-700 text-sm sm:text-base">Business Type:</span>
+              <span className="text-neutral-600 text-sm sm:text-base">{getBusinessTypeLabel(profileData.businessType)}</span>
             </div>
             {profileData.businessType === 'other' && profileData.customBusinessType && (
               <div className="bg-white/50 rounded-lg p-3">
@@ -128,9 +128,9 @@ const ProfileSection = ({ userData, isVisible = true }) => {
               </div>
             )}
             {profileData.businessName && (
-              <div className="flex items-center space-x-2">
-                <span className="font-medium text-neutral-700">Business Name:</span>
-                <span className="text-neutral-600">{profileData.businessName}</span>
+              <div className="flex flex-col sm:flex-row sm:items-center space-y-1 sm:space-y-0 sm:space-x-2">
+                <span className="font-medium text-neutral-700 text-sm sm:text-base">Business Name:</span>
+                <span className="text-neutral-600 text-sm sm:text-base">{profileData.businessName}</span>
               </div>
             )}
           </div>
@@ -138,20 +138,20 @@ const ProfileSection = ({ userData, isVisible = true }) => {
       </div>
 
       {/* Contact Information */}
-      <div className="bg-white rounded-2xl border border-neutral-200 p-6">
-        <h4 className="text-lg font-bold text-neutral-800 mb-4 flex items-center space-x-2">
+      <div className="bg-white rounded-2xl border border-neutral-200 p-4 sm:p-6">
+        <h4 className="text-base sm:text-lg font-bold text-neutral-800 mb-4 flex items-center space-x-2">
           <span>📧</span>
           <span>Contact Information</span>
         </h4>
         <div className="space-y-3">
-          <div className="flex items-center space-x-3">
-            <span className="font-medium text-neutral-700 w-16">Email:</span>
-            <span className="text-neutral-600">{profileData.email}</span>
+          <div className="flex flex-col sm:flex-row sm:items-center space-y-1 sm:space-y-0 sm:space-x-3">
+            <span className="font-medium text-neutral-700 w-full sm:w-16 text-sm sm:text-base">Email:</span>
+            <span className="text-neutral-600 text-sm sm:text-base break-all">{profileData.email}</span>
           </div>
           {profileData.name && (
-            <div className="flex items-center space-x-3">
-              <span className="font-medium text-neutral-700 w-16">Name:</span>
-              <span className="text-neutral-600">{profileData.name}</span>
+            <div className="flex flex-col sm:flex-row sm:items-center space-y-1 sm:space-y-0 sm:space-x-3">
+              <span className="font-medium text-neutral-700 w-full sm:w-16 text-sm sm:text-base">Name:</span>
+              <span className="text-neutral-600 text-sm sm:text-base">{profileData.name}</span>
             </div>
           )}
         </div>
@@ -164,9 +164,9 @@ const ProfileSection = ({ userData, isVisible = true }) => {
     const hasSocialLinks = Object.values(socialLinks).some(link => link && link.trim());
 
     return (
-      <div className="space-y-6">
-        <div className="bg-white rounded-2xl border border-neutral-200 p-6">
-          <h4 className="text-lg font-bold text-neutral-800 mb-4 flex items-center space-x-2">
+      <div className="space-y-4 sm:space-y-6">
+        <div className="bg-white rounded-2xl border border-neutral-200 p-4 sm:p-6">
+          <h4 className="text-base sm:text-lg font-bold text-neutral-800 mb-4 flex items-center space-x-2">
             <span>🌐</span>
             <span>Social Media Profiles</span>
           </h4>
@@ -182,16 +182,16 @@ const ProfileSection = ({ userData, isVisible = true }) => {
                       href={url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex items-center space-x-4 p-4 rounded-xl border border-neutral-200 hover:border-primary-300 hover:shadow-md transition-all duration-300 bg-gradient-to-r hover:from-neutral-50 hover:to-primary-50"
+                      className="flex flex-col sm:flex-row items-start sm:items-center space-y-3 sm:space-y-0 sm:space-x-4 p-4 rounded-xl border border-neutral-200 hover:border-primary-300 hover:shadow-md transition-all duration-300 bg-gradient-to-r hover:from-neutral-50 hover:to-primary-50"
                     >
-                      <div className={`w-12 h-12 rounded-xl bg-gradient-to-r ${getSocialPlatformColor(platform)} flex items-center justify-center text-white text-xl shadow-lg group-hover:scale-105 transition-transform`}>
+                      <div className={`w-12 h-12 rounded-xl bg-gradient-to-r ${getSocialPlatformColor(platform)} flex items-center justify-center text-white text-xl shadow-lg group-hover:scale-105 transition-transform flex-shrink-0`}>
                         {getSocialPlatformIcon(platform)}
                       </div>
-                      <div className="flex-1">
-                        <h5 className="font-semibold text-neutral-800 capitalize">{platform}</h5>
-                        <p className="text-sm text-neutral-600 truncate">{url}</p>
+                      <div className="flex-1 min-w-0">
+                        <h5 className="font-semibold text-neutral-800 capitalize text-sm sm:text-base">{platform}</h5>
+                        <p className="text-xs sm:text-sm text-neutral-600 truncate">{url}</p>
                       </div>
-                      <div className="text-primary-500 group-hover:text-primary-600 transition-colors">
+                      <div className="text-primary-500 group-hover:text-primary-600 transition-colors self-end sm:self-center">
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
                         </svg>
@@ -202,10 +202,10 @@ const ProfileSection = ({ userData, isVisible = true }) => {
               })}
             </div>
           ) : (
-            <div className="text-center py-8">
-              <div className="text-4xl mb-3 opacity-50">🔗</div>
-              <h5 className="text-lg font-medium text-neutral-700 mb-2">No social media links added</h5>
-              <p className="text-neutral-500 text-sm">Add your social media profiles to increase visibility and build trust with potential clients.</p>
+            <div className="text-center py-6 sm:py-8">
+              <div className="text-3xl sm:text-4xl mb-3 opacity-50">🔗</div>
+              <h5 className="text-base sm:text-lg font-medium text-neutral-700 mb-2">No social media links added</h5>
+              <p className="text-neutral-500 text-sm leading-relaxed max-w-md mx-auto">Add your social media profiles to increase visibility and build trust with potential clients.</p>
             </div>
           )}
         </div>
@@ -257,28 +257,28 @@ const ProfileSection = ({ userData, isVisible = true }) => {
   };
 
   return (
-    <div className={`max-w-4xl mx-auto transition-all duration-500 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
+    <div className={`max-w-4xl mx-auto px-4 sm:px-6 transition-all duration-500 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
       {/* Profile Header */}
-      <div className="mb-8">
-        <div className={`bg-gradient-to-r ${config.gradient} rounded-2xl p-8 text-white relative overflow-hidden`}>
+      <div className="mb-6 sm:mb-8">
+        <div className={`bg-gradient-to-r ${config.gradient} rounded-2xl p-6 sm:p-8 text-white relative overflow-hidden`}>
           <div className="absolute inset-0 bg-black/10"></div>
           <div className="relative z-10">
-            <div className="flex items-center space-x-6">
-              <div className="w-20 h-20 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center text-4xl border border-white/30">
+            <div className="flex flex-col sm:flex-row items-center sm:items-start space-y-4 sm:space-y-0 sm:space-x-6">
+              <div className="w-16 h-16 sm:w-20 sm:h-20 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center text-3xl sm:text-4xl border border-white/30">
                 {config.icon}
               </div>
-              <div>
-                <h2 className="text-3xl font-bold mb-2">
+              <div className="text-center sm:text-left">
+                <h2 className="text-2xl sm:text-3xl font-bold mb-2">
                   {profileData.name || profileData.businessName || 'Your Profile'}
                 </h2>
-                <p className="text-white/90 text-lg">
+                <p className="text-white/90 text-base sm:text-lg">
                   {config.title}
                 </p>
-                <div className="flex items-center space-x-4 mt-2">
-                  <span className="bg-white/20 backdrop-blur-sm px-3 py-1 rounded-full text-sm font-medium border border-white/30">
+                <div className="flex flex-col sm:flex-row items-center sm:items-start space-y-2 sm:space-y-0 sm:space-x-4 mt-2">
+                  <span className="bg-white/20 backdrop-blur-sm px-3 py-1 rounded-full text-xs sm:text-sm font-medium border border-white/30">
                     {profileData.email}
                   </span>
-                  <span className="text-white/80 text-sm">
+                  <span className="text-white/80 text-xs sm:text-sm">
                     Joined {formatDate(profileData.createdAt)}
                   </span>
                 </div>
@@ -289,7 +289,7 @@ const ProfileSection = ({ userData, isVisible = true }) => {
       </div>
 
       {/* Tab Navigation */}
-      <div className="flex space-x-1 mb-6 bg-neutral-100 rounded-2xl p-1">
+      <div className="flex flex-col sm:flex-row space-y-1 sm:space-y-0 sm:space-x-1 mb-6 bg-neutral-100 rounded-2xl p-1">
         {[
           { id: 'overview', label: 'Overview', icon: '👤' },
           { id: 'social', label: 'Social Media', icon: '🌐' },
@@ -298,14 +298,14 @@ const ProfileSection = ({ userData, isVisible = true }) => {
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
-            className={`flex-1 flex items-center justify-center space-x-2 py-3 px-4 rounded-xl font-medium transition-all duration-300 ${
+            className={`flex-1 flex items-center justify-center space-x-2 py-3 px-3 sm:px-4 rounded-xl font-medium transition-all duration-300 text-sm sm:text-base ${
               activeTab === tab.id
                 ? 'bg-white text-primary-600 shadow-md'
                 : 'text-neutral-600 hover:text-neutral-800 hover:bg-white/50'
             }`}
           >
             <span>{tab.icon}</span>
-            <span>{tab.label}</span>
+            <span className="hidden sm:inline">{tab.label}</span>
           </button>
         ))}
       </div>

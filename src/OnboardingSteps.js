@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 
 // Freelancer Purpose Step
 export const FreelancerPurposeStep = ({ formData, updateFormData, errors }) => {
@@ -159,38 +159,35 @@ export const SocialLinksStep = ({ formData, updateFormData, errors }) => {
   ];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 relative isolate">
       <div className="text-center">
         <h3 className="text-3xl font-bold text-neutral-800 mb-4">Boost your visibility</h3>
         <p className="text-lg text-neutral-600">Add your social media links to build trust and showcase your work</p>
         <div className="mt-2 text-sm text-neutral-500">Optional - but highly recommended</div>
       </div>
 
-      <div className="space-y-6 onboarding-content">
+      <div className="space-y-4 onboarding-content">
         {socialPlatforms.map((platform, index) => (
-          <div key={platform.key} className="social-card bg-white border border-neutral-200 rounded-2xl p-6 hover:shadow-md transition-all duration-300">
+          <div key={platform.key} className="social-card relative bg-white border border-neutral-200 rounded-2xl p-6 hover:shadow-md transition-all duration-300" style={{ zIndex: 10 - index }}>
             <div className="space-y-4">
               <div className="flex items-center space-x-4">
                 <div className="w-12 h-12 bg-gradient-to-r from-primary-100 to-accent-100 rounded-xl flex items-center justify-center text-2xl flex-shrink-0">
                   {platform.icon}
                 </div>
-                <div className="flex-1">
-                  <div className="flex items-center justify-between">
+                <div className="flex-1 min-w-0">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                     <label className="font-semibold text-neutral-800 text-lg">{platform.label}</label>
-                    <span className="text-sm text-neutral-500 hidden sm:block">{platform.description}</span>
-                  </div>
-                  <div className="sm:hidden mt-1">
                     <span className="text-sm text-neutral-500">{platform.description}</span>
                   </div>
                 </div>
               </div>
-              <div className="w-full">
+              <div className="w-full relative">
                 <input
                   type="url"
                   value={formData.socialLinks[platform.key]}
                   onChange={(e) => updateFormData(`socialLinks.${platform.key}`, e.target.value)}
                   placeholder={platform.placeholder}
-                  className="social-input w-full p-4 border border-neutral-300 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent text-sm bg-neutral-50 focus:bg-white transition-colors"
+                  className="social-input w-full p-4 border border-neutral-300 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent text-sm bg-neutral-50 focus:bg-white transition-colors relative z-20"
                 />
               </div>
             </div>
@@ -198,13 +195,197 @@ export const SocialLinksStep = ({ formData, updateFormData, errors }) => {
         ))}
       </div>
 
-      <div className="bg-gradient-to-r from-primary-50 to-accent-50 border border-primary-200 rounded-2xl p-4">
+      <div className="bg-primary-50 rounded-2xl p-6 border border-primary-200">
         <div className="flex items-start space-x-3">
-          <div className="text-2xl">💡</div>
+          <div className="text-2xl flex-shrink-0">💡</div>
           <div>
-            <h4 className="font-semibold text-primary-800 mb-1">Pro Tip</h4>
+            <h4 className="font-semibold text-primary-800 mb-2">Pro tip</h4>
+            <p className="text-primary-700 text-sm leading-relaxed">
+              Having complete social media profiles increases your credibility by <strong>85%</strong> and helps potential clients understand your work style and expertise.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {errors.socialLinks && (
+        <div className="p-4 bg-red-50 border border-red-200 rounded-xl text-red-600 text-sm">
+          {errors.socialLinks}
+        </div>
+      )}
+    </div>
+  );
+};
+
+// Google Maps Verification Step
+export const GoogleMapsVerificationStep = ({ formData, updateFormData, errors }) => {
+  const [isVerifying, setIsVerifying] = useState(false);
+  const [verificationResult, setVerificationResult] = useState(null);
+
+  const handleVerifyGoogleMaps = async () => {
+    if (!formData.googleMapsUrl || !formData.googleMapsUrl.trim()) {
+      return;
+    }
+
+    setIsVerifying(true);
+    setVerificationResult(null);
+
+    try {
+      // Import the verification function from supabaseClient
+      const { verifyGoogleMapsLink } = await import('./supabaseClient');
+      const result = await verifyGoogleMapsLink(formData.googleMapsUrl);
+      
+      if (result.success) {
+        setVerificationResult({
+          success: true,
+          data: result.data
+        });
+        updateFormData('verifiedBusinessData', result.data);
+      } else {
+        setVerificationResult({
+          success: false,
+          error: result.error
+        });
+      }
+    } catch (error) {
+      console.error('Error verifying Google Maps link:', error);
+      setVerificationResult({
+        success: false,
+        error: 'Failed to verify Google Maps link. Please try again.'
+      });
+    } finally {
+      setIsVerifying(false);
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="text-center">
+        <h3 className="text-3xl font-bold text-neutral-800 mb-4">Verify Your Business</h3>
+        <p className="text-lg text-neutral-600">Add your Google Maps business link to build trust with freelancers</p>
+        <div className="mt-2 text-sm text-neutral-500">This step helps verify your business legitimacy</div>
+      </div>
+
+      <div className="max-w-2xl mx-auto">
+        <div className="bg-gradient-to-r from-accent-50 to-primary-50 border border-accent-200 rounded-2xl p-6 mb-6">
+          <div className="flex items-start space-x-3">
+            <div className="text-2xl">🔍</div>
+            <div>
+              <h4 className="font-semibold text-accent-800 mb-2">How to find your Google Maps business link:</h4>
+              <ol className="text-accent-700 text-sm space-y-1 list-decimal list-inside">
+                <li>Go to Google Maps and search for your business</li>
+                <li>Click on your business listing</li>
+                <li>Click the "Share" button</li>
+                <li>Copy the link and paste it below</li>
+              </ol>
+            </div>
+          </div>
+        </div>
+
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-semibold text-neutral-700 mb-3">
+              Google Maps Business URL *
+            </label>
+            <div className="relative">
+              <input
+                type="url"
+                value={formData.googleMapsUrl}
+                onChange={(e) => updateFormData('googleMapsUrl', e.target.value)}
+                placeholder="https://maps.google.com/..."
+                className={`w-full p-4 border-2 rounded-2xl focus:ring-2 focus:ring-accent-500 focus:border-transparent text-sm ${
+                  errors.googleMapsUrl ? 'border-red-300' : 'border-neutral-300'
+                }`}
+              />
+              <button
+                type="button"
+                onClick={handleVerifyGoogleMaps}
+                disabled={isVerifying || !formData.googleMapsUrl?.trim()}
+                className="absolute right-2 top-2 px-4 py-2 bg-accent-500 text-white rounded-xl hover:bg-accent-600 disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium transition-colors"
+              >
+                {isVerifying ? 'Verifying...' : 'Verify'}
+              </button>
+            </div>
+            
+            {errors.googleMapsUrl && (
+              <div className="mt-2 text-red-600 text-sm">{errors.googleMapsUrl}</div>
+            )}
+          </div>
+
+          {/* Verification Result */}
+          {verificationResult && (
+            <div className={`rounded-2xl p-6 border ${
+              verificationResult.success 
+                ? 'bg-green-50 border-green-200' 
+                : 'bg-red-50 border-red-200'
+            }`}>
+              {verificationResult.success ? (
+                <div>
+                  <div className="flex items-center space-x-2 mb-4">
+                    <div className="text-2xl">✅</div>
+                    <h4 className="font-semibold text-green-800">Business Verified Successfully!</h4>
+                  </div>
+                  <div className="grid md:grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <span className="font-medium text-green-700">Business Name:</span>
+                      <p className="text-green-600">{verificationResult.data.name}</p>
+                    </div>
+                    <div>
+                      <span className="font-medium text-green-700">Category:</span>
+                      <p className="text-green-600">{verificationResult.data.category}</p>
+                    </div>
+                    <div>
+                      <span className="font-medium text-green-700">Address:</span>
+                      <p className="text-green-600">{verificationResult.data.address}</p>
+                    </div>
+                    <div>
+                      <span className="font-medium text-green-700">Phone:</span>
+                      <p className="text-green-600">{verificationResult.data.phone}</p>
+                    </div>
+                    {verificationResult.data.website && (
+                      <div className="md:col-span-2">
+                        <span className="font-medium text-green-700">Website:</span>
+                        <p className="text-green-600">{verificationResult.data.website}</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ) : (
+                <div>
+                  <div className="flex items-center space-x-2 mb-2">
+                    <div className="text-2xl">❌</div>
+                    <h4 className="font-semibold text-red-800">Verification Failed</h4>
+                  </div>
+                  <p className="text-red-600 text-sm">{verificationResult.error}</p>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Business Description */}
+          {verificationResult?.success && (
+            <div className="animate-slide-in-up">
+              <label className="block text-sm font-semibold text-neutral-700 mb-3">
+                Business Description
+              </label>
+              <textarea
+                value={formData.businessDescription}
+                onChange={(e) => updateFormData('businessDescription', e.target.value)}
+                placeholder="Describe the services you need or problems you want to solve..."
+                className="w-full p-4 border border-neutral-300 rounded-2xl focus:ring-2 focus:ring-accent-500 focus:border-transparent resize-none h-24 text-sm"
+              />
+              <p className="text-neutral-500 text-xs mt-2">Help freelancers understand what you're looking for</p>
+            </div>
+          )}
+        </div>
+      </div>
+
+      <div className="bg-gradient-to-r from-primary-50 to-accent-50 border border-primary-200 rounded-2xl p-4 max-w-2xl mx-auto">
+        <div className="flex items-start space-x-3">
+          <div className="text-2xl">🏆</div>
+          <div>
+            <h4 className="font-semibold text-primary-800 mb-1">Why verify your business?</h4>
             <p className="text-primary-700 text-sm">
-              Adding social links increases your profile credibility by up to 70% and helps potential clients or collaborators learn more about you.
+              Verified businesses with Google Maps links are <strong>3x more likely</strong> to be chosen by freelancers and get highlighted with a special badge.
             </p>
           </div>
         </div>
