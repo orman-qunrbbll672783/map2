@@ -286,18 +286,14 @@ const FeatureCard = ({ feature, isVisible, index }) => {
         <div className="absolute inset-0 bg-gradient-to-br from-primary-500/5 to-accent-500/5 rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
         
         <div className="relative z-10">
-          {/* Image placeholder - INSERT YOUR IMAGE HERE */}
+          {/* Image with dynamic map selection */}
           <div className="mb-8 transform group-hover:scale-105 transition-transform duration-500">
-            <div className="w-full h-48 bg-gradient-to-br from-neutral-100 to-neutral-200 rounded-2xl flex items-center justify-center border-2 border-dashed border-neutral-300 relative overflow-hidden">
-              {/* Replace this div with your image component: */}
-              {/* <img src="your-image-path.jpg" alt={feature.title} className="w-full h-full object-cover rounded-2xl" /> */}
-              
-              {/* Placeholder content - remove when adding your image */}
-              <div className="text-center text-neutral-500">
-                <div className="text-4xl mb-2">{feature.icon}</div>
-                <p className="text-sm font-medium">Insert your image here</p>
-                <p className="text-xs opacity-75">Recommended: 400x200px</p>
-              </div>
+            <div className="w-full h-48 rounded-2xl overflow-hidden">
+              <img 
+                src={`/m${index === 0 ? '2' : index === 1 ? '1' : index === 2 ? '3' : '4'}.jpg`} 
+                alt={feature.title} 
+                className="w-full h-full object-cover rounded-2xl" 
+              />
             </div>
           </div>
           
