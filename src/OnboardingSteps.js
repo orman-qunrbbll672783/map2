@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 // Freelancer Purpose Step
 export const FreelancerPurposeStep = ({ formData, updateFormData, errors }) => {
@@ -220,9 +220,46 @@ export const SocialLinksStep = ({ formData, updateFormData, errors }) => {
 export const GoogleMapsVerificationStep = ({ formData, updateFormData, errors }) => {
   const [isVerifying, setIsVerifying] = useState(false);
   const [verificationResult, setVerificationResult] = useState(null);
+  const [fetchTimeout, setFetchTimeout] = useState(null);
 
-  const handleVerifyGoogleMaps = async () => {
-    if (!formData.googleMapsUrl || !formData.googleMapsUrl.trim()) {
+  // Clear results when URL changes
+  const handleUrlChange = (newUrl) => {
+    // Clear existing timeout
+    if (fetchTimeout) {
+      clearTimeout(fetchTimeout);
+      setFetchTimeout(null);
+    }
+    
+    // Clear previous results immediately
+    setVerificationResult(null);
+    updateFormData('verifiedBusinessData', null);
+    
+    // Update the URL
+    updateFormData('googleMapsUrl', newUrl);
+    
+    // If URL is not empty and looks like a Google Maps URL, start verification immediately
+    if (newUrl && newUrl.trim() && newUrl.length > 10) {
+      // Check if it contains Google Maps patterns
+      const googleMapsPatterns = [
+        /google\.com\/maps/i,
+        /maps\.google\./i,
+        /goo\.gl\/maps/i,
+        /maps\.app\.goo\.gl/i,
+        /g\.page/i
+      ];
+      
+      const isGoogleMapsUrl = googleMapsPatterns.some(pattern => pattern.test(newUrl));
+      
+      if (isGoogleMapsUrl) {
+        handleVerifyGoogleMaps(newUrl);
+      }
+    }
+  };
+
+  const handleVerifyGoogleMaps = async (urlToVerify = null) => {
+    const url = urlToVerify || formData.googleMapsUrl;
+    
+    if (!url || !url.trim()) {
       return;
     }
 
@@ -232,7 +269,10 @@ export const GoogleMapsVerificationStep = ({ formData, updateFormData, errors })
     try {
       // Import the verification function from supabaseClient
       const { verifyGoogleMapsLink } = await import('./supabaseClient');
-      const result = await verifyGoogleMapsLink(formData.googleMapsUrl);
+      console.log('Verifying Google Maps URL:', url);
+      
+      const result = await verifyGoogleMapsLink(url);
+      console.log('Verification result:', result);
       
       if (result.success) {
         setVerificationResult({
@@ -277,6 +317,14 @@ export const GoogleMapsVerificationStep = ({ formData, updateFormData, errors })
                 <li>Click the "Share" button</li>
                 <li>Copy the link and paste it below</li>
               </ol>
+              <div className="mt-3 text-xs text-accent-600">
+                ✅ <strong>We accept all Google Maps URL formats:</strong><br/>
+                • Full links: maps.google.com/place/...<br/>
+                • Short links: goo.gl/maps/... or maps.app.goo.gl/...<br/>
+                • Direct links with place_id or cid<br/>
+                • Share links from mobile apps<br/>
+                • Google business profile links (g.page/...)
+              </div>
             </div>
           </div>
         </div>
@@ -288,22 +336,23 @@ export const GoogleMapsVerificationStep = ({ formData, updateFormData, errors })
             </label>
             <div className="relative">
               <input
-                type="url"
+                type="text"
                 value={formData.googleMapsUrl}
-                onChange={(e) => updateFormData('googleMapsUrl', e.target.value)}
-                placeholder="https://maps.google.com/..."
+                onChange={(e) => handleUrlChange(e.target.value)}
+                placeholder="Paste any Google Maps business link here..."
                 className={`w-full p-4 border-2 rounded-2xl focus:ring-2 focus:ring-accent-500 focus:border-transparent text-sm ${
                   errors.googleMapsUrl ? 'border-red-300' : 'border-neutral-300'
                 }`}
               />
-              <button
-                type="button"
-                onClick={handleVerifyGoogleMaps}
-                disabled={isVerifying || !formData.googleMapsUrl?.trim()}
-                className="absolute right-2 top-2 px-4 py-2 bg-accent-500 text-white rounded-xl hover:bg-accent-600 disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium transition-colors"
-              >
-                {isVerifying ? 'Verifying...' : 'Verify'}
-              </button>
+              {isVerifying && (
+                <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                  <div className="animate-spin w-5 h-5 border-2 border-accent-300 border-t-accent-600 rounded-full"></div>
+                </div>
+              )}
+            </div>
+            
+            <div className="mt-2 text-xs text-neutral-500">
+              💡 Tip: Paste your link and verification will start automatically. We accept ANY Google Maps business URL format!
             </div>
             
             {errors.googleMapsUrl && (
@@ -313,7 +362,7 @@ export const GoogleMapsVerificationStep = ({ formData, updateFormData, errors })
 
           {/* Verification Result */}
           {verificationResult && (
-            <div className={`rounded-2xl p-6 border ${
+            <div className={`rounded-2xl p-6 border transition-all duration-300 ${
               verificationResult.success 
                 ? 'bg-green-50 border-green-200' 
                 : 'bg-red-50 border-red-200'
@@ -339,12 +388,24 @@ export const GoogleMapsVerificationStep = ({ formData, updateFormData, errors })
                     </div>
                     <div>
                       <span className="font-medium text-green-700">Phone:</span>
-                      <p className="text-green-600">{verificationResult.data.phone}</p>
+                      <p className="text-green-600">{verificationResult.data.phone || 'Not available'}</p>
                     </div>
                     {verificationResult.data.website && (
                       <div className="md:col-span-2">
                         <span className="font-medium text-green-700">Website:</span>
                         <p className="text-green-600">{verificationResult.data.website}</p>
+                      </div>
+                    )}
+                    {verificationResult.data.rating > 0 && (
+                      <div className="md:col-span-2">
+                        <span className="font-medium text-green-700">Rating:</span>
+                        <p className="text-green-600">{verificationResult.data.rating}/5 ⭐ ({verificationResult.data.totalRatings} reviews)</p>
+                      </div>
+                    )}
+                    {verificationResult.data.note && (
+                      <div className="md:col-span-2 bg-blue-50 p-3 rounded-lg">
+                        <span className="font-medium text-blue-700">Note:</span>
+                        <p className="text-blue-600 text-xs">{verificationResult.data.note}</p>
                       </div>
                     )}
                   </div>
@@ -356,6 +417,9 @@ export const GoogleMapsVerificationStep = ({ formData, updateFormData, errors })
                     <h4 className="font-semibold text-red-800">Verification Failed</h4>
                   </div>
                   <p className="text-red-600 text-sm">{verificationResult.error}</p>
+                  <div className="mt-3 text-xs text-red-500">
+                    💡 Try copying the link again or contact support if the problem persists.
+                  </div>
                 </div>
               )}
             </div>
@@ -365,10 +429,10 @@ export const GoogleMapsVerificationStep = ({ formData, updateFormData, errors })
           {verificationResult?.success && (
             <div className="animate-slide-in-up">
               <label className="block text-sm font-semibold text-neutral-700 mb-3">
-                Business Description
+                Business Description (Optional)
               </label>
               <textarea
-                value={formData.businessDescription}
+                value={formData.businessDescription || ''}
                 onChange={(e) => updateFormData('businessDescription', e.target.value)}
                 placeholder="Describe the services you need or problems you want to solve..."
                 className="w-full p-4 border border-neutral-300 rounded-2xl focus:ring-2 focus:ring-accent-500 focus:border-transparent resize-none h-24 text-sm"

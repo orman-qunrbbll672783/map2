@@ -73,6 +73,9 @@ const OnboardingFlow = ({ userType, onClose, onComplete }) => {
             newErrors.purpose = 'Please tell us your purpose on the platform';
           }
           break;
+        case 2:
+          // Social links step is optional - no validation needed
+          break;
         case 3:
           if (!formData.name.trim()) {
             newErrors.name = 'Name is required';
@@ -99,7 +102,13 @@ const OnboardingFlow = ({ userType, onClose, onComplete }) => {
             newErrors.businessType = 'Please select your business type';
           }
           break;
+        case 2:
+          // Google Maps verification step - no validation needed, it's handled in the component
+          break;
         case 3:
+          // Social links step is optional - no validation needed
+          break;
+        case 4:
           if (!formData.businessName.trim()) {
             newErrors.businessName = 'Business name is required';
           }
